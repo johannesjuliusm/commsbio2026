@@ -1,0 +1,19 @@
+# Never track sensitive data
+data/
+
+# Never track R session files
+.Rhistory
+.RData
+.Ruserdata
+
+# Do not track local renv package library
+renv/library/
+renv/staging/
+
+# Do not track generated/private outputs
+output/
+publications/
+
+# Never track OS / RStudio files
+.DS_Store
+.Rproj.user/
