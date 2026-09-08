@@ -807,16 +807,19 @@ p.adjust(c(0.044, 0.022, 0.172), method = "fdr")
 
 # Moderation of maltreatment-brain centiles associations by SES ----------------
 
-model <- lmer(cgm_c ~ cm_group * ses_z + age + sex_factor + (1|family_id), data = df)
+model <- lmer(cgm_c ~ cm_group * ses_z + age_centred + sex_factor + (1|family_id), data = df)
 summary(model)
 confint(model, method = "Wald")
+joint_tests(model)
 
-model <- lmer(wm_c ~ cm_group * ses_z + age + sex_factor + (1|family_id), data = df)
+model <- lmer(wm_c ~ cm_group * ses_z + age_centred + sex_factor + (1|family_id), data = df)
 summary(model)
 confint(model, method = "Wald")
+joint_tests(model)
 
-model <- lmer(sgm_c ~ cm_group * ses_z + age + sex_factor + (1|family_id), data = df)
+model <- lmer(sgm_c ~ cm_group * ses_z + age_centred + sex_factor + (1|family_id), data = df)
 summary(model)
 confint(model, method = "Wald")
+joint_tests(model)
 
-p.adjust(c(0.046, 0.643, 0.226), method = "fdr")
+p.adjust(c(.046, .226, .643), method = "fdr")
