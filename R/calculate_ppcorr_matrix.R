@@ -2,14 +2,21 @@ calculate_ppcorr_matrix <- function(
     df,
     covariates = c("age", "sex"),
     pcor.method = "pearson",
-    plot = FALSE
+    plot = FALSE,
+    pal = NULL
 ) {
   
+  # validate covariates
   if (is.null(covariates)) {
     covariates <- character(0)
   }
   
   use_covariates <- length(covariates) > 0
+  
+  # validate a supplied color palette
+  if (!is.null(pal) && (!is.character(pal) || length(pal) < 2)) {
+    stop("`pal` must be NULL or a character vector containing at least two colors.")
+  }
   
   numeric_vars <- setdiff(
     names(df)[sapply(df, is.numeric)],
@@ -112,7 +119,22 @@ calculate_ppcorr_matrix <- function(
         
         if (plot && i != j) {
           
-          line_color <- ifelse(p_value < 0.05, "red", "black")
+          if (is.null(pal)) {
+            
+            line_color <- ifelse(p_value < 0.05, "red", "darkgrey")
+            point_color <- "black"
+            
+          } else {
+            
+            line_color <- ifelse(p_value < 0.05, "black", "darkgrey")
+            color_index <- round(
+              (r_value + 1) / 2 * (length(pal) - 1)
+            ) + 1
+            
+            color_index <- pmax(1, pmin(length(pal), color_index))
+            
+            point_color <- pal[color_index]
+          }
           
           p <- ggplot(
             residuals_df,
@@ -121,8 +143,8 @@ calculate_ppcorr_matrix <- function(
             geom_point(
               pch = 21,
               stroke = 0,
-              fill = "black",
-              size = 2,
+              fill = point_color,
+              size = 1.5,
               alpha = 1
             ) +
             geom_smooth(
@@ -130,22 +152,37 @@ calculate_ppcorr_matrix <- function(
               color = line_color,
               se = FALSE
             ) +
+            annotate(
+              "label",
+              x = -Inf,
+              y = Inf,
+              label = sprintf("r = %.2f", r_value),
+              hjust = -0.2,
+              vjust = 1.2,
+              size = 2.8,
+              color = "black",
+              fill = scales::alpha("white", 0.7),
+              linewidth = 0
+            ) +
             labs(
-              title = if (use_covariates) {
-                paste("Partial Correlation:", round(r_value, 2))
-              } else {
-                paste("Correlation:", round(r_value, 2))
-              },
-              caption = cov_caption,
+              # title = if (use_covariates) {
+              #   paste("Partial Correlation:", round(r_value, 2))
+              # } else {
+              #   paste("Correlation:", round(r_value, 2))
+              # },
+              # caption = cov_caption,
               x = var1,
               y = var2
             ) +
-            scale_x_continuous(expand = c(0, 0)) +
-            scale_y_continuous(expand = c(0, 0)) +
+            scale_x_continuous(
+              expand = expansion(mult = c(0, 0.05))
+            ) +
+            scale_y_continuous(
+              expand = expansion(mult = c(0, 0.05))
+            ) +
             charite::theme_sci(
-              font_size = 6,
-              aspect_ratio = 1,
-              tiny_margins = TRUE
+              font_size = 8,
+              aspect_ratio = 1
             )
           
           plot_name <- paste0("ppcorrplot_", var1, "_x_", var2)

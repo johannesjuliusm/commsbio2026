@@ -22,6 +22,7 @@ source(here::here("scripts", "00_setup.R"))
 
 # --- packages ---
 library(corrplot)
+library(cowplot)
 
 # --- directories ---
 path2figures_out  <- file.path(path2figures, "correlation_matrix")
@@ -72,17 +73,14 @@ df <- reduce(list(iq_scores, sdq_scores, bc_cgm, bc_wm, bc_sgm), full_join, by =
 
 # Correlation matrix -----------------------------------------------------------
 
-pal <- make_charite_palette(c(
-  charite_colors$ROT, charite_colors$KORALL, "#f7f7f7",
-  charite_colors$SECOND_LBLUE, charite_colors$SECOND_DBLUE))(10)
-
 names(df) <- c("Nonverbal IQ", "Verbal IQ", "Externalizing", "Internalizing", "cGM Centile", "WM Centile", "sGM Centile")
 
 corr_results <- calculate_ppcorr_matrix(
   df = df,
   covariates = NULL,
   pcor.method = "pearson",
-  plot = TRUE
+  plot = TRUE,
+  pal = charite_pal
 )
 
 
@@ -102,7 +100,8 @@ plot_correlation_matrix(
   pvals   = corr_results$pvalues,
   pch.cex = 2,
   pch.col = "white",
-  insig   = "n"
+  insig   = "n",
+  col     = charite_pal
 )
 
 dev.off()
@@ -122,7 +121,172 @@ plot_correlation_matrix(
   pvals   = corr_results$pvalues,
   pch.cex = 2,
   pch.col = "white",
-  insig   = "n"
+  insig   = "n",
+  col     = charite_pal
 )
 
 dev.off()
+
+# individual plots of bivariate correlations
+for (plot_name in names(corr_results$plots)) {
+  
+  plot_outname <- gsub(" ", "_", tolower(plot_name))
+  
+  charite::nice_save(paste0(plot_outname, ".png"), corr_results$plots[[plot_name]], layout = "half col", bg = "white")
+
+}
+
+
+# Correlation matrix of scatter plots ------------------------------------------
+
+# define sparse axis breaks for less clutter
+axis_breaks <- list(
+  "Nonverbal IQ" = c(70, 100, 130),
+  "Verbal IQ" = c(70, 100, 130),
+  "Externalizing" = c(5, 10, 15),
+  "Internalizing" = c(5, 10, 15),
+  "cGM Centile" = c(.25, .5, .75),
+  "WM Centile" = c(.25, .5, .75),
+  "sGM Centile" = c(.25, .5, .75)
+)
+
+# helper function to format axis numbers
+format_axis <- function(x) {
+  sub("^(-?)0\\.", "\\1.", format(x, trim = TRUE))
+}
+
+
+for (plot_name in names(corr_results$plots)) {
+  
+  p <- corr_results$plots[[plot_name]]
+  
+  x_var <- p$labels$x
+  y_var <- p$labels$y
+  
+  if (x_var %in% names(axis_breaks)) {
+    
+    x_breaks <- axis_breaks[[x_var]]
+    
+    p <- p +
+      scale_x_continuous(
+        breaks = x_breaks,
+        labels = format_axis,
+        expand = expansion(mult = c(0, 0.05))
+      )
+  }
+  
+  if (y_var %in% names(axis_breaks)) {
+    
+    y_breaks <- axis_breaks[[y_var]]
+    
+    p <- p +
+      scale_y_continuous(
+        breaks = y_breaks,
+        labels = format_axis,
+        expand = expansion(mult = c(0, 0.05))
+      )
+  }
+  
+  corr_results$plots[[plot_name]] <- p
+}
+
+vars <- colnames(corr_results$correlations)
+n <- length(vars)
+
+# order the plots accoring to their appearance in the correlation matrix
+# strip axis labels and breaks for plots in the inner triangle
+ordered_plots <- list()
+
+for (i in 2:n) {
+  for (j in 1:(i - 1)) {
+    
+    name1 <- paste0(
+      "ppcorrplot_", vars[j], "_x_", vars[i]
+    )
+    
+    name2 <- paste0(
+      "ppcorrplot_", vars[i], "_x_", vars[j]
+    )
+    
+    if (name1 %in% names(corr_results$plots)) {
+      p <- corr_results$plots[[name1]]
+    } else {
+      p <- corr_results$plots[[name2]]
+    }
+    
+    # only first column keeps y-axis numbers and title
+    if (j > 1) {
+      p <- p +
+        theme(
+          axis.text.y  = element_blank(),
+          axis.title.y = element_blank()
+        )
+    }
+    
+    # only bottom row keeps x-axis numbers and title
+    if (i < n) {
+      p <- p +
+        theme(
+          axis.text.x  = element_blank(),
+          axis.title.x = element_blank()
+        )
+    }
+    
+    # remove spacing around the entire plot for more compact figure
+    p <- p +
+      theme(
+        plot.margin = margin(0, 0, 0, 0)
+      )
+    
+    ordered_plots[[length(ordered_plots) + 1]] <- p
+  }
+}
+
+# align the plots so that y axes match despite different y value levels
+aligned_plots <- cowplot::align_plots(
+  plotlist = ordered_plots,
+  align = "v",
+  axis = "tb"
+)
+
+# construct triangular grid
+grid_plots <- list()
+
+k <- 1
+
+for (i in 1:(n - 1)) {
+  
+  for (j in 1:(n - 1)) {
+    
+    if (j <= i) {
+      
+      # actual plot
+      grid_plots[[length(grid_plots) + 1]] <-
+        aligned_plots[[k]]
+      
+      k <- k + 1
+      
+    } else {
+      
+      # actual blank cell, importantly, NOT NULL
+      grid_plots[[length(grid_plots) + 1]] <-
+        cowplot::ggdraw()
+    }
+  }
+}
+
+# combined plot
+combined_plot <- cowplot::plot_grid(
+  plotlist = grid_plots,
+  ncol = n - 1,
+  nrow = n - 1
+)
+
+# figure export
+ggsave(
+  "correlation_matrix_of_scatter_plots.pdf",
+  plot = combined_plot,
+  width = 1.3 * (n - 1),
+  height = 1.3 * (n - 1),
+  units = "in"
+)

@@ -15,6 +15,11 @@ sev_colors <- c(
   "5" = charite::charite_colors$WEINROT
 )
 
+# custom color palette
+charite_pal <- make_charite_palette(c(
+  charite_colors$ROT, charite_colors$KORALL, "#f7f7f7",
+  charite_colors$SECOND_LBLUE, charite_colors$SECOND_DBLUE))(201)
+
 # order of sexes
 sex_order <- c("males", "females")
 
