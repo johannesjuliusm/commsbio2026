@@ -55,7 +55,7 @@ ADJUST_FOR_SES <- FALSE
 POP_REF <- 50
 
 # plot parameters
-HIDE_NS <- TRUE
+HIDE_NS <- FALSE
 SHOW_VIOLIN <- TRUE
 SHOW_BOXPLOT <- TRUE
 SHOW_MARGINAL_MEANS <- TRUE
@@ -301,11 +301,16 @@ fig1_list <- map(tissues_labels, \(tt) {
     )
   
   pop_tt <- popmean_tests_adjusted %>%
-    filter(tissue == tt, p.adj.signif != "ns") %>%
+    filter(tissue == tt) %>% 
     mutate(
       y.position = YSTACK[N_GROUPS] - 6,
       label = p.adj.signif
     )
+  
+  if (HIDE_NS) {
+    pop_tt <- pop_tt %>%
+      filter(p.adj.signif != "ns")
+  }
   
   ymax <- YSTACK[N_GROUPS] - 4
   
@@ -405,7 +410,7 @@ fig1_list <- map(tissues_labels, \(tt) {
         xmax = "group2",
         tip.length = 0.01,
         inherit.aes = FALSE,
-        size = 4
+        size = 5
       )
   }
   
@@ -419,7 +424,7 @@ fig1_list <- map(tissues_labels, \(tt) {
           label = label
         ),
         inherit.aes = FALSE,
-        fontface = "bold",
+        #fontface = "bold",
         size = 5,
         vjust = 0
       )
@@ -544,6 +549,8 @@ write_csv(severity_popmean_tests_all, file.path(path2results_global, "results_se
 
 # Maltreatment load group differences ------------------------------------------
 
+N_SEV_GROUPS <- length(unique(df_sev_long$sev_group))
+
 # --- associations with total number of subtypes experienced ---
 severity_results <- set_names(tissues_labels) %>%
   map(
@@ -612,7 +619,7 @@ severity_pairwise <- purrr::map_dfr(
     group_var = "sev_group",
     adjust = ADJUSTMENT_METHOD,
     ystack = YSTACK,
-    n_groups = N_GROUPS
+    n_groups = N_SEV_GROUPS
   )
 )
 
@@ -641,18 +648,27 @@ fig2_list <- map(tissues_labels, \(tt) {
   }
   
   ann_tt <- ann_tt %>%
-    arrange(group1, group2) %>%
+    arrange(group2, group1) %>%
     mutate(
-      y.position = rep(YSTACK, length.out = n())
+      y.position = rep(YSTACK[2:n()], length.out = n()),
+      y.position = y.position + 6,
+      group1 = gsub("sev_group", "", group1),
+      group2 = gsub("sev_group", "", group2)
     )
   
   pop_tt <- severity_popmean_tests_adjusted %>%
-    filter(tissue == tt, p.adj.signif != "ns") %>%
+    filter(tissue == tt) %>% 
     mutate(
-      y.position = YSTACK[N_GROUPS] - 6,
+      y.position = YSTACK[1],
       label = p.adj.signif
     )
   
+  if (HIDE_NS) {
+    pop_tt <- pop_tt %>%
+      filter(p.adj.signif != "ns")
+  }
+  
+  # ymax <- ifelse(HIDE_NS, YSTACK[N_GROUPS] - 4, max(ann_tt$y.position + 6))
   ymax <- YSTACK[N_GROUPS] - 4
   
   if (SHOW_VIOLIN) {
@@ -729,19 +745,19 @@ fig2_list <- map(tissues_labels, \(tt) {
     guides(fill = "none", color = "none") +
     labs(title = tt, x = NULL, y = NULL)
   
-  if (nrow(ann_tt) > 0) {
-    p <- p +
-      stat_pvalue_manual(
-        ann_tt,
-        label = "p.adj.signif",
-        y.position = "y.position",
-        xmin = "group1",
-        xmax = "group2",
-        tip.length = 0.01,
-        inherit.aes = FALSE,
-        size = 4
-      )
-  }
+  # if (nrow(ann_tt) > 0) {
+  #   p <- p +
+  #     stat_pvalue_manual(
+  #       ann_tt,
+  #       label = "p.adj.signif",
+  #       y.position = "y.position",
+  #       xmin = "group1",
+  #       xmax = "group2",
+  #       tip.length = 0.01,
+  #       inherit.aes = FALSE,
+  #       size = 4
+  #     )
+  # }
   
   if (nrow(pop_tt) > 0) {
     p <- p +
@@ -753,7 +769,7 @@ fig2_list <- map(tissues_labels, \(tt) {
           label = label
         ),
         inherit.aes = FALSE,
-        fontface = "bold",
+        #fontface = "bold",
         size = 5,
         vjust = 0
       )
