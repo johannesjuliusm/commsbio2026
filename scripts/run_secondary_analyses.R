@@ -624,7 +624,7 @@ convert_lmm_table_to_word(
   out_path = out_path,
   table_number = "Sx",
   orientation = "landscape",
-  table_title = "Associations among brain centiles, intellectual ability, and behavioural problems.",
+  table_title = "Moderation of associations among brain centiles, intellectual ability and behavioural problems by maltreatment status.",
   note = paste0(
     "Linear mixed-effects models included age and sex as covariates ",
     "and a random intercept for family. ",
