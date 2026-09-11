@@ -284,7 +284,7 @@ combined_plot <- cowplot::plot_grid(
 
 # figure export
 ggsave(
-  "correlation_matrix_of_scatter_plots.pdf",
+  "correlation_matrix_of_scatterplots.pdf",
   plot = combined_plot,
   width = 1.3 * (n - 1),
   height = 1.3 * (n - 1),
