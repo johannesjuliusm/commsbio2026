@@ -21,3 +21,11 @@ The data used in this study are available upon reasonable request to the corresp
 ## License
 
 This repository is licensed under the MIT License. See `LICENSE` for details.
+
+## Citation
+
+A permanent archive of the code used in this study is available on Zenodo:
+
+**DOI:** [10.5281/zenodo.22710945](https://doi.org/10.5281/zenodo.22710945)
+
+Please cite this repository when using the code.
