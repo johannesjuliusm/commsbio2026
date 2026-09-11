@@ -30,7 +30,7 @@ format_lmm_table <- function(results,
   
   table <- results %>%
     dplyr::transmute(
-      `Imaging Phenotype` = phenotype,
+      `Phenotype` = phenotype,
       Term = term,
       
       Estimate = true_minus(
