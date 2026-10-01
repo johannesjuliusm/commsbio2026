@@ -1,11 +1,16 @@
 cff-version: 1.2.0
-message: "If you use this code, please cite it using the metadata below."
-title: "Childhood Maltreatment and Brain Centiles"
+type: software
+
+title: "Maltreatment predicts centiles of individual variation from normative brain growth in children"
+version: 1.0.0
+date-released: 2026-09-11
+
 authors:
   - family-names: "Mohn"
     given-names: "Johannes Julius"
     orcid: "https://orcid.org/0000-0002-3893-8008"
-version: 1.0.0
+	
+repository-code: https://github.com/johannesjuliusm/commsbio2026
 doi: 10.5281/zenodo.22710945
-date-released: 2026-09-11
+
 license: MIT
